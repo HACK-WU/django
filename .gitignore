@@ -22,3 +22,4 @@ tests/screenshots/
 *.xml
 .idea/
 uv.lock
+.idea/
