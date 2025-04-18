@@ -2,7 +2,6 @@ from demo.settings import *
 
 INSTALLED_APPS += [
     'app01',
-    # 'example',
     'django_elasticsearch_dsl',
 ]
 
