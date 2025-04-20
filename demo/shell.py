@@ -2,3 +2,8 @@
 # Time: 2025/4/18 22:43
 # name: shell
 # author: HACK-WU
+
+
+import hello
+from example.es.models import manufacturer_infos, models
+from app01.ser import ManufacturerSerializer

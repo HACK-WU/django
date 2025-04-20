@@ -158,6 +158,8 @@ source = { editable = "." }
 dependencies = [
     { name = "asgiref" },
     { name = "django-elasticsearch-dsl" },
+    { name = "djangorestframework" },
+    { name = "elasticsearch-dsl" },
     { name = "pymysql" },
     { name = "python-dotenv" },
     { name = "sqlparse" },
@@ -178,6 +180,8 @@ requires-dist = [
     { name = "asgiref", specifier = ">=3.8.1" },
     { name = "bcrypt", marker = "extra == 'bcrypt'" },
     { name = "django-elasticsearch-dsl", specifier = ">=8.0" },
+    { name = "djangorestframework", specifier = ">=3.16.0" },
+    { name = "elasticsearch-dsl", specifier = ">=8.18.0" },
     { name = "pymysql", specifier = ">=1.1.1" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "sqlparse", specifier = ">=0.3.1" },
@@ -195,6 +199,18 @@ dependencies = [
 sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/e6/b5/3b03f3edaaab56d333e1ded33f047a0c1c48a96ff4bd284ef15254e1216a/django-elasticsearch-dsl-8.0.tar.gz", hash = "sha256:64ee0612ced6d57515a6b7f29f1a3e1c2eea1996a6226fc72079a95c067b27ca" }
 wheels = [
     { url = "https://pypi.tuna.tsinghua.edu.cn/packages/30/7c/5a2d818a5c9cd9719fa00e65c424f4653b0c9a46f8c78e0d540efb839683/django_elasticsearch_dsl-8.0-py2.py3-none-any.whl", hash = "sha256:423784a4af336d109c3763622f1edc4973664cb5154beb55b3ff9390c1e4525e" },
+]
+
+[[package]]
+name = "djangorestframework"
+version = "3.16.0"
+source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/7d/97/112c5a72e6917949b6d8a18ad6c6e72c46da4290c8f36ee5f1c1dcbc9901/djangorestframework-3.16.0.tar.gz", hash = "sha256:f022ff46613584de994c0c6a4aebbace5fd700555fbe9d33b865ebf173eba6c9", size = 1068408 }
+wheels = [
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/eb/3e/2448e93f4f87fc9a9f35e73e3c05669e0edd0c2526834686e949bb1fd303/djangorestframework-3.16.0-py3-none-any.whl", hash = "sha256:bea7e9f6b96a8584c5224bfb2e4348dfb3f8b5e34edbecb98da258e892089361", size = 1067305 },
 ]
 
 [[package]]

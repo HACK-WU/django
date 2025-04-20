@@ -1,6 +1,6 @@
 from django_elasticsearch_dsl import Document
 from django_elasticsearch_dsl.registries import registry
-from .models import Car
+from app01 import models
 
 
 # https://django-elasticsearch-dsl.readthedocs.io/en/latest/quickstart.html
@@ -14,7 +14,7 @@ class CarDocument(Document):
                     'number_of_replicas': 0}
 
     class Django:
-        model = Car  # The model associated with this Document
+        model = models.Car  # The model associated with this Document
 
         # The fields of the model you want to be indexed in Elasticsearch
         fields = [
