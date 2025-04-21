@@ -5,5 +5,5 @@
 
 
 import hello
-from example.es.models import manufacturer_infos, models
+from example.django_es_dsl.models import manufacturer_infos, models
 from app01.ser import ManufacturerSerializer

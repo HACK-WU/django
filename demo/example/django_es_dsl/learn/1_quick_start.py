@@ -4,7 +4,7 @@
 # author: HACK-WU
 
 import hello
-from example.es.document import CarDocument
+from example.django_es_dsl.document import CarDocument
 
 s = CarDocument.search().filter("term", color="red")
 

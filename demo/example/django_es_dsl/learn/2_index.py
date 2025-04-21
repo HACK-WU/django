@@ -5,7 +5,7 @@
 
 from elasticsearch.dsl import Index
 from django_elasticsearch_dsl import Document
-from example.es.models import Car, Manufacturer
+from example.django_es_dsl.models import Car, Manufacturer
 from django_elasticsearch_dsl.registries import registry
 
 # The name of your index

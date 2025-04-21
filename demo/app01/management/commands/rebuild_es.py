@@ -4,7 +4,7 @@
 # author: HACK-WU
 from django.core.management.base import BaseCommand
 from django_elasticsearch_dsl.registries import registry
-from example.es import document
+from example.django_es_dsl import document
 
 
 class Command(BaseCommand):
