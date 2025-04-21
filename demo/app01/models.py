@@ -17,6 +17,18 @@ class Car(BaseModel):
         (3, "SUV"),
     ])
 
+    # https://django-elasticsearch-dsl.readthedocs.io/en/latest/fields.html
+    def type_to_string(self):
+        """Convert the type field to its string representation
+        (the boneheaded way).
+        """
+        if self.type == 1:
+            return "Sedan"
+        elif self.type == 2:
+            return "Truck"
+        else:
+            return "SUV"
+
     class Meta:
         db_table = "car"
         indexes = [

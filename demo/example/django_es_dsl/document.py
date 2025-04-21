@@ -1,4 +1,4 @@
-from django_elasticsearch_dsl import Document
+from django_elasticsearch_dsl import Document, fields
 from django_elasticsearch_dsl.registries import registry
 from app01 import models
 
@@ -6,6 +6,11 @@ from app01 import models
 # https://django-elasticsearch-dsl.readthedocs.io/en/latest/quickstart.html
 @registry.register_document
 class CarDocument(Document):
+    # add a string field to the Elasticsearch mapping called type, the
+    # value of which is derived from the model's type_to_string attribute
+    # https://django-elasticsearch-dsl.readthedocs.io/en/latest/fields.html
+    type = fields.TextField(attr="type_to_string")
+
     class Index:
         # Name of the Elasticsearch index
         name = 'cars'
@@ -14,9 +19,9 @@ class CarDocument(Document):
                     'number_of_replicas': 0}
 
     class Django:
-        model = models.Car  # The model associated with this Document
+        model = models.Car  # 与当前document关联的模型
 
-        # The fields of the model you want to be indexed in Elasticsearch
+        # 要在Elasticsearch中检索的字段
         fields = [
             'name',
             'color',
@@ -24,16 +29,15 @@ class CarDocument(Document):
             'type',
         ]
 
-        # Ignore auto updating of Elasticsearch when a model is saved
-        # or deleted:
+        # 当模型保存或删除时，忽略自动更新Elasticsearch
         # ignore_signals = True
 
-        # Configure how the index should be refreshed after an update.
-        # See Elasticsearch documentation for supported options:
+        # 配置更新后索引的刷新方式
+        # 可用的设置选项参考Elasticsearch文档：
         # https://www.elastic.co/guide/en/elasticsearch/reference/master/docs-refresh.html
-        # This per-Document setting overrides settings.ELASTICSEARCH_DSL_AUTO_REFRESH.
+        # 该每个Document的设置会覆盖全局设置settings.ELASTICSEARCH_DSL_AUTO_REFRESH
         # auto_refresh = False
 
-        # Paginate the django queryset used to populate the index with the specified size
-        # (by default it uses the database driver's default setting)
+        # 对用于填充索引的Django查询集进行分页，指定分页大小
+        # （默认使用数据库驱动的默认设置）
         # queryset_pagination = 5000
