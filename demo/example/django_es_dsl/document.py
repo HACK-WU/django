@@ -11,6 +11,8 @@ class CarDocument(Document):
     # https://django-elasticsearch-dsl.readthedocs.io/en/latest/fields.html
     type = fields.TextField(attr="type_to_string")
 
+    color = fields.TextField()
+
     class Index:
         # Name of the Elasticsearch index
         name = 'cars'
@@ -24,9 +26,9 @@ class CarDocument(Document):
         # 要在Elasticsearch中检索的字段
         fields = [
             'name',
-            'color',
+            # 'color',  # 显示声明以后，这里不需要再声明
             'description',
-            'type',
+            # 'type',
         ]
 
         # 当模型保存或删除时，忽略自动更新Elasticsearch
@@ -41,3 +43,12 @@ class CarDocument(Document):
         # 对用于填充索引的Django查询集进行分页，指定分页大小
         # （默认使用数据库驱动的默认设置）
         # queryset_pagination = 5000
+
+    # 有时候，在将字段保存到 Elasticsearch 之前，您需要做一些额外的准备工作。
+    # 您可以通过在Document类中定义一个名为prepare_[field_name]的函数来实现这一点。
+    # 这个函数应该接受一个模型实例作为参数，并返回一个值，该值将被存储在 Elasticsearch 中。
+    def prepare_color(self, instance):
+        """
+        将颜色转换为大写
+        """
+        return instance.color.upper()

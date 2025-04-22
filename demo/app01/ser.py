@@ -6,19 +6,28 @@ from app01 import models
 from rest_framework import serializers
 
 
-class CarSerializer(serializers.ModelSerializer):
+class BaseModelSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+
+class CarSerializer(BaseModelSerializer):
     class Meta:
         model = models.Car
         fields = "__all__"
 
 
-class ManufacturerSerializer(serializers.ModelSerializer):
+class ManufacturerSerializer(BaseModelSerializer):
     class Meta:
         model = models.Manufacturer
         fields = "__all__"
 
 
-class InitialModelsSerializer(serializers.ModelSerializer):
+class InitialModelsSerializer(BaseModelSerializer):
     class Meta:
         model = models.InitialModels
+        fields = "__all__"
+
+
+class AdSerializer(BaseModelSerializer):
+    class Meta:
+        model = models.Ad
         fields = "__all__"

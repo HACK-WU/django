@@ -3,9 +3,16 @@
 # name: shell
 # author: HACK-WU
 
-
+#
 import hello
-from example.django_es_dsl.models import manufacturer_infos, models
 from app01.ser import ManufacturerSerializer
 
-from django_elasticsearch_dsl.signals import post_index
+data={
+    # "id": 1,
+    "name": "Audi1",
+    "country": "Germany",
+}
+
+ser = ManufacturerSerializer(data=data)
+ser.is_valid(raise_exception=True)
+ser.save()
