@@ -64,6 +64,8 @@ TEMPLATES = [
     },
 ]
 
+# 指定WSGI应用程序
+# 当运行runserver命令时，会通过get_internal_wsgi_application() 函数获取到该应用程序
 WSGI_APPLICATION = 'demo.wsgi.application'
 
 # Database

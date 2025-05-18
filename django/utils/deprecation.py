@@ -111,6 +111,8 @@ class MiddlewareMixin:
         )
 
     def __call__(self, request):
+        # 被中间件包装过后的对象，
+        # 被调用时会先执行process_request方法，然后再执行process_response方法
         # Exit out to async mode, if needed
         if self.async_mode:
             return self.__acall__(request)

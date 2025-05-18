@@ -111,15 +111,48 @@ class WSGIRequest(HttpRequest):
 
 
 class WSGIHandler(base.BaseHandler):
+    """
+    WSGIHandler 是一个处理 WSGI 请求的核心处理器类，继承自 BaseHandler。
+    该类负责将 WSGI 协议的请求转换为 Django 的请求/响应流程。
+
+    属性:
+        request_class (class): 创建请求对象时使用的类，此处指定为 WSGIRequest。
+    """
     request_class = WSGIRequest
 
     def __init__(self, *args, **kwargs):
+        """
+        初始化 WSGIHandler 实例。
+
+        参数:
+            *args: 可变位置参数，传递给父类构造函数。
+            **kwargs: 可变关键字参数，传递给父类构造函数。
+        """
         super().__init__(*args, **kwargs)
         self.load_middleware()
 
     def __call__(self, environ, start_response):
+        """
+        处理 WSGI 请求的入口方法。
+
+        参数:
+            environ (dict): WSGI 环境变量字典，包含请求的所有信息。
+            start_response (callable): WSGI 协议规定的响应启动回调函数。
+
+        返回:
+            iterable: 响应内容的可迭代对象，通常由 start_response 发送。
+
+        该方法完整处理一个请求周期：
+        1. 配置脚本路径并发送请求开始信号
+        2. 创建请求对象并获取响应
+        3. 准备响应状态和头部
+        4. 处理文件流传输（如果适用）
+        """
+        # 配置 SCRIPT_NAME 环境变量并发送请求开始信号
         set_script_prefix(get_script_name(environ))
         signals.request_started.send(sender=self.__class__, environ=environ)
+
+        # 创建请求对象并获取响应
         request = self.request_class(environ)
         response = self.get_response(request)
 
@@ -131,12 +164,12 @@ class WSGIHandler(base.BaseHandler):
             *(("Set-Cookie", c.output(header="")) for c in response.cookies.values()),
         ]
         start_response(status, response_headers)
+
+        # 处理文件流传输优化
         if getattr(response, "file_to_stream", None) is not None and environ.get(
             "wsgi.file_wrapper"
         ):
-            # If `wsgi.file_wrapper` is used the WSGI server does not call
-            # .close on the response, but on the file wrapper. Patch it to use
-            # response.close instead which takes care of closing all files.
+            # 如果使用 wsgi.file_wrapper，需要修正文件关闭逻辑以确保资源释放
             response.file_to_stream.close = response.close
             response = environ["wsgi.file_wrapper"](
                 response.file_to_stream, response.block_size

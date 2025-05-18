@@ -352,17 +352,31 @@ class ManagementUtility:
 
     def execute(self):
         """
-        Given the command-line arguments, figure out which subcommand is being
-        run, create a parser appropriate to that command, and run it.
+        执行命令行解析并分发到对应子命令处理器
+
+        该方法完成以下核心流程：
+        1. 解析命令行参数确定子命令
+        2. 预处理影响环境配置的关键参数
+        3. 初始化Django设置
+        4. 根据子命令类型执行对应操作
+
+        参数:
+            无显式参数，通过self.argv接收命令行参数列表
+            依赖self.prog_name存储程序名称
+            依赖self.settings_exception存储配置异常
+
+        返回值:
+            无显式返回值，通过sys.stdout输出帮助信息
+            或通过执行子命令产生对应副作用
         """
         try:
             subcommand = self.argv[1]
         except IndexError:
             subcommand = "help"  # Display help if no arguments were given.
 
-        # Preprocess options to extract --settings and --pythonpath.
-        # These options could affect the commands that are available, so they
-        # must be processed early.
+        # 预处理环境配置参数
+        # 创建基础解析器处理影响后续操作的关键参数
+        # 包含设置模块和Python路径参数
         parser = CommandParser(
             prog=self.prog_name,
             usage="%(prog)s subcommand [options] [args]",
@@ -378,6 +392,8 @@ class ManagementUtility:
         except CommandError:
             pass  # Ignore any option errors at this point.
 
+        # 验证应用配置状态
+        # 捕获设置模块导入异常和配置错误
         try:
             settings.INSTALLED_APPS
         except ImproperlyConfigured as exc:
@@ -385,25 +401,19 @@ class ManagementUtility:
         except ImportError as exc:
             self.settings_exception = exc
 
+        # 延迟初始化处理
+        # 对于runserver命令特殊处理自动重载机制
         if settings.configured:
-            # Start the auto-reloading dev server even if the code is broken.
-            # The hardcoded condition is a code smell but we can't rely on a
-            # flag on the command class because we haven't located it yet.
             if subcommand == "runserver" and "--noreload" not in self.argv:
                 try:
                     autoreload.check_errors(django.setup)()
                 except Exception:
-                    # The exception will be raised later in the child process
-                    # started by the autoreloader. Pretend it didn't happen by
-                    # loading an empty list of applications.
+                    # 异常处理用于子进程错误隔离
                     apps.all_models = defaultdict(dict)
                     apps.app_configs = {}
                     apps.apps_ready = apps.models_ready = apps.ready = True
 
-                    # Remove options not compatible with the built-in runserver
-                    # (e.g. options for the contrib.staticfiles' runserver).
-                    # Changes here require manually testing as described in
-                    # #27522.
+                    # 清理runserver不兼容参数
                     _parser = self.fetch_command("runserver").create_parser(
                         "django", "runserver"
                     )
@@ -411,12 +421,14 @@ class ManagementUtility:
                     for _arg in _args:
                         self.argv.remove(_arg)
 
-            # In all other cases, django.setup() is required to succeed.
+            # 标准初始化流程
             else:
                 django.setup()
 
         self.autocomplete()
 
+        # 命令分发逻辑
+        # 处理帮助信息显示的不同场景
         if subcommand == "help":
             if "--commands" in args:
                 sys.stdout.write(self.main_help_text(commands_only=True) + "\n")
@@ -426,8 +438,7 @@ class ManagementUtility:
                 self.fetch_command(options.args[0]).print_help(
                     self.prog_name, options.args[0]
                 )
-        # Special-cases: We want 'django-admin --version' and
-        # 'django-admin --help' to work, for backwards compatibility.
+        # 兼容性参数处理
         elif subcommand == "version" or self.argv[1:] == ["--version"]:
             sys.stdout.write(django.get_version() + "\n")
         elif self.argv[1:] in (["--help"], ["-h"]):
