@@ -565,17 +565,26 @@ SIGNING_BACKEND = "django.core.signing.TimestampSigner"
 # rejected by the CSRF middleware.
 CSRF_FAILURE_VIEW = "django.views.csrf.csrf_failure"
 
+"""
+CSRF保护机制配置参数
+
+该配置块定义了跨站请求伪造（CSRF）防护相关的cookie属性、请求头设置
+以及信任源策略，用于控制Web应用的安全验证行为
+"""
+
 # Settings for CSRF cookie.
-CSRF_COOKIE_NAME = "csrftoken"
-CSRF_COOKIE_AGE = 60 * 60 * 24 * 7 * 52
-CSRF_COOKIE_DOMAIN = None
-CSRF_COOKIE_PATH = "/"
-CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
-CSRF_TRUSTED_ORIGINS = []
-CSRF_USE_SESSIONS = False
+# 配置CSRF保护的核心参数集合，包含cookie属性和验证策略
+CSRF_COOKIE_NAME = "csrftoken"  # CSRF令牌的cookie名称标识
+CSRF_COOKIE_AGE = 60 * 60 * 24 * 7 * 52  # cookie有效期（秒）：52周（1年）
+CSRF_COOKIE_DOMAIN = None  # cookie作用域，默认不限制域名
+CSRF_COOKIE_PATH = "/"  # cookie路径限制
+CSRF_COOKIE_SECURE = False  # 是否仅通过HTTPS传输
+CSRF_COOKIE_HTTPONLY = False  # 是否禁止JavaScript访问
+CSRF_COOKIE_SAMESITE = "Lax"  # SameSite属性限制跨站请求
+CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"  # 请求头中携带CSRF令牌的字段名
+CSRF_TRUSTED_ORIGINS = []  # 受信任的请求来源白名单列表
+CSRF_USE_SESSIONS = False  # 是否使用服务端会话存储CSRF令牌
+
 
 ############
 # MESSAGES #
