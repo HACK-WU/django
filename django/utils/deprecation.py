@@ -88,6 +88,20 @@ class MiddlewareMixin:
     async_capable = True
 
     def __init__(self, get_response):
+        """
+        初始化中间件实例
+
+        参数:
+            get_response: 一个用于获取响应的可调用对象，通常是下一个中间件或视图函数
+
+        异常:
+            ValueError: 如果get_response参数为None，则抛出此异常
+
+        该构造函数负责：
+        1. 验证get_response参数是否被提供
+        2. 判断是否需要启用异步模式
+        3. 调用超类构造函数进行任何必要的初始化
+        """
         if get_response is None:
             raise ValueError("get_response must be provided.")
         self.get_response = get_response
@@ -99,6 +113,7 @@ class MiddlewareMixin:
             # __call__ to avoid swapping out dunder methods.
             markcoroutinefunction(self)
         super().__init__()
+
 
     def __repr__(self):
         return "<%s get_response=%s>" % (

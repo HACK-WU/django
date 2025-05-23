@@ -278,6 +278,7 @@ class CsrfViewMiddleware(MiddlewareMixin):
         else:
             # 处理使用cookie存储CSRF密钥的情况
             try:
+                # CSRF_COOKIE_NAME 默认值为'csrftoken'
                 csrf_secret = request.COOKIES[settings.CSRF_COOKIE_NAME]
             except KeyError:
                 csrf_secret = None
@@ -469,7 +470,7 @@ class CsrfViewMiddleware(MiddlewareMixin):
         # 支持PUT/DELETE方法的令牌验证
         if request_csrf_token == "":
             try:
-                # 令牌可能来自DOM或cookie（带掩码/不带掩码）
+                # 尝试从请求头中获取CSRF令牌，CSRF_HEADER_NAME默认设置为HTTP_X_CSRFTOKEN
                 request_csrf_token = request.META[settings.CSRF_HEADER_NAME]
             except KeyError:
                 raise RejectRequest(REASON_CSRF_TOKEN_MISSING)
@@ -585,6 +586,22 @@ class CsrfViewMiddleware(MiddlewareMixin):
         return self._accept(request)
 
     def process_response(self, request, response):
+        """
+        处理响应对象并管理CSRF Cookie更新
+
+        参数:
+            request: HttpRequest对象，包含请求元数据和CSRF_COOKIE_NEEDS_UPDATE标志
+            response: HttpResponse对象，可能需要附加更新的CSRF Cookie
+
+        返回值:
+            返回原始的HttpResponse对象（可能已被_set_csrf_cookie修改）
+
+        该方法实现CSRF Cookie的延迟更新机制，包含以下核心逻辑：
+        1. 检查请求元数据中的CSRF_COOKIE_NEEDS_UPDATE标志
+        2. 如果标志存在且为True，调用_set_csrf_cookie方法更新Cookie
+        3. 重置CSRF_COOKIE_NEEDS_UPDATE标志防止重复更新
+        4. 返回未修改的响应对象（可能已被_set_csrf_cookie修改）
+        """
         if request.META.get("CSRF_COOKIE_NEEDS_UPDATE"):
             self._set_csrf_cookie(request, response)
             # Unset the flag to prevent _set_csrf_cookie() from being

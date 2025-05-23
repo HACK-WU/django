@@ -63,7 +63,21 @@ def get_random_string(length, allowed_chars=RANDOM_STRING_CHARS):
 
 
 def constant_time_compare(val1, val2):
-    """Return True if the two strings are equal, False otherwise."""
+    """
+    安全地比较两个字符串是否相等
+
+    该函数旨在通过使用恒定时间比较算法来防止时间攻击，特别适用于比较密码、哈希值等敏感信息
+
+    参数:
+        val1: 第一个字符串，可以是常规字符串或哈希摘要等
+        val2: 第二个字符串，与第一个字符串进行比较
+
+    返回值:
+        True如果两个字符串相等，False否则
+
+    使用'secrets.compare_digest'实现恒定时间比较，确保即使字符串不完全相同，攻击者也无法通过时间差来推测字符串的相似程度
+    'force_bytes'用于确保输入值为字节类型，这对于保持比较的安全性至关重要
+    """
     return secrets.compare_digest(force_bytes(val1), force_bytes(val2))
 
 
