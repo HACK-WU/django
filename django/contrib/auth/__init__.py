@@ -25,6 +25,8 @@ def load_backend(path):
 
 def _get_backends(return_tuples=False):
     backends = []
+    # AUTHENTICATION_BACKENDSAUTHENTICATION_BACKENDS
+    # 默认值： django.contrib.auth.backends.ModelBackend
     for backend_path in settings.AUTHENTICATION_BACKENDS:
         backend = load_backend(backend_path)
         backends.append((backend, backend_path) if return_tuples else backend)

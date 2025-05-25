@@ -511,12 +511,19 @@ SESSION_SERIALIZER = "django.contrib.sessions.serializers.JSONSerializer"
 # CACHE #
 #########
 
-# The cache backends to use.
+# 配置缓存后端设置
+# 默认使用本地内存缓存（LocMemCache），适用于开发环境单进程场景
+# BACKEND参数指定缓存实现类路径，需符合Python导入规范
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 }
+
+# 缓存中间件全局配置参数
+# CACHE_MIDDLEWARE_KEY_PREFIX: 缓存键命名空间前缀（空值表示不使用命名空间）
+# CACHE_MIDDLEWARE_SECONDS: 默认缓存过期时间（单位：秒）
+# CACHE_MIDDLEWARE_ALIAS: 指定使用的缓存配置别名（对应CACHES字典中的键）
 CACHE_MIDDLEWARE_KEY_PREFIX = ""
 CACHE_MIDDLEWARE_SECONDS = 600
 CACHE_MIDDLEWARE_ALIAS = "default"

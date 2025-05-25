@@ -98,16 +98,27 @@ def method_decorator(decorator, name=""):
 
 def decorator_from_middleware_with_args(middleware_class):
     """
-    Like decorator_from_middleware, but return a function
-    that accepts the arguments to be passed to the middleware_class.
-    Use like::
+    创建带参数的中间件装饰器工厂函数
 
-         cache_page = decorator_from_middleware_with_args(CacheMiddleware)
-         # ...
+    参数:
+        middleware_class: 中间件类对象，需实现__init__和__call__方法
+            该类应接受请求处理函数和任意参数进行实例化
 
-         @cache_page(3600)
-         def my_view(request):
-             # ...
+    返回值:
+        function: 返回可调用对象装饰器，支持传入任意参数进行初始化
+            生成的装饰器遵循标准中间件调用协议，可嵌套应用在视图函数上
+
+    该函数实现中间件到装饰器的适配模式，典型应用场景：
+    1. 需要传递配置参数给中间件的场景（如缓存超时时间）
+    2. 需要动态创建不同配置的装饰器实例
+    3. 统一中间件和装饰器编程范式
+
+    使用示例:
+        cache_page = decorator_from_middleware_with_args(CacheMiddleware)
+
+        @cache_page(3600)  # 应用带参数的装饰器
+        def my_view(request):
+            pass
     """
     return make_middleware_decorator(middleware_class)
 
@@ -122,11 +133,55 @@ def decorator_from_middleware(middleware_class):
 
 
 def make_middleware_decorator(middleware_class):
+    """
+    创建中间件装饰器的工厂函数，将中间件类封装为视图装饰器
+
+    参数:
+        middleware_class: 中间件类对象，需实现标准中间件接口方法
+
+    返回值:
+        _make_decorator: 装饰器工厂函数，用于生成具体中间件装饰器
+    """
     def _make_decorator(*m_args, **m_kwargs):
+        """
+        生成具体中间件装饰器的闭包函数
+
+        参数:
+            *m_args: 传递给中间件类的初始化位置参数
+            **m_kwargs: 传递给中间件类的初始化关键字参数
+
+        返回值:
+            _decorator: 视图函数装饰器，用于封装中间件逻辑
+        """
         def _decorator(view_func):
+            """
+            实际装饰视图函数的装饰器
+
+            参数:
+                view_func: 被装饰的视图函数
+
+            返回值:
+                _view_wrapper: 带中间件逻辑的视图包装函数
+            """
             middleware = middleware_class(view_func, *m_args, **m_kwargs)
 
             def _pre_process_request(request, *args, **kwargs):
+                """
+                执行中间件的请求预处理和视图处理阶段
+
+                参数:
+                    request: HttpRequest对象
+                    *args: 视图函数的位置参数
+                    **kwargs: 视图函数的关键字参数
+
+                返回值:
+                    中间件处理结果（响应对象或None）
+
+                处理流程：
+                1. 执行process_request方法（若存在）
+                2. 执行process_view方法（若存在）
+                3. 任一阶段返回非None结果则终止流程
+                """
                 if hasattr(middleware, "process_request"):
                     result = middleware.process_request(request)
                     if result is not None:
@@ -138,6 +193,20 @@ def make_middleware_decorator(middleware_class):
                 return None
 
             def _process_exception(request, exception):
+                """
+                异常处理阶段的中间件逻辑
+
+                参数:
+                    request: HttpRequest对象
+                    exception: 捕获的异常对象
+
+                返回值:
+                    中间件处理后的响应对象或重新抛出异常
+
+                处理流程：
+                1. 执行process_exception方法（若存在）
+                2. 返回非None结果则终止异常处理流程
+                """
                 if hasattr(middleware, "process_exception"):
                     result = middleware.process_exception(request, exception)
                     if result is not None:
@@ -145,6 +214,21 @@ def make_middleware_decorator(middleware_class):
                 raise
 
             def _post_process_request(request, response):
+                """
+                响应后处理阶段的中间件逻辑
+
+                参数:
+                    request: HttpRequest对象
+                    response: HttpResponse对象
+
+                返回值:
+                    处理后的响应对象
+
+                处理流程：
+                1. 处理模板响应（process_template_response）
+                2. 延迟执行process_response直到模板渲染完成
+                3. 非模板响应直接执行process_response
+                """
                 if hasattr(response, "render") and callable(response.render):
                     if hasattr(middleware, "process_template_response"):
                         response = middleware.process_template_response(
@@ -166,6 +250,15 @@ def make_middleware_decorator(middleware_class):
             if iscoroutinefunction(view_func):
 
                 async def _view_wrapper(request, *args, **kwargs):
+                    """
+                    异步视图函数的包装器，串联中间件处理流程
+
+                    处理流程：
+                    1. 执行预处理阶段
+                    2. 调用原始视图函数
+                    3. 异常处理阶段
+                    4. 响应后处理阶段
+                    """
                     result = _pre_process_request(request, *args, **kwargs)
                     if result is not None:
                         return result
@@ -182,6 +275,15 @@ def make_middleware_decorator(middleware_class):
             else:
 
                 def _view_wrapper(request, *args, **kwargs):
+                    """
+                    同步视图函数的包装器，串联中间件处理流程
+
+                    处理流程：
+                    1. 执行预处理阶段
+                    2. 调用原始视图函数
+                    3. 异常处理阶段
+                    4. 响应后处理阶段
+                    """
                     result = _pre_process_request(request, *args, **kwargs)
                     if result is not None:
                         return result
@@ -200,6 +302,7 @@ def make_middleware_decorator(middleware_class):
         return _decorator
 
     return _make_decorator
+
 
 
 def sync_and_async_middleware(func):

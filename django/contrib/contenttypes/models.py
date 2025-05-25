@@ -34,9 +34,19 @@ class ContentTypeManager(models.Manager):
 
     def get_for_model(self, model, for_concrete_model=True):
         """
-        Return the ContentType object for a given model, creating the
-        ContentType if necessary. Lookups are cached so that subsequent lookups
-        for the same model don't hit the database.
+        获取指定模型对应的ContentType对象，若不存在则创建新对象。通过缓存机制避免重复数据库查询。
+
+        参数:
+            model: Django模型类或实例，用于获取模型元数据
+            for_concrete_model: 布尔值，是否针对具体模型进行查询（排除代理模型）
+
+        返回值:
+            ContentType实例对象，表示模型对应的类型信息
+
+        该方法实现双检查询问数据库策略：
+        1. 首先检查本地缓存是否存在有效记录
+        2. 缓存未命中时优先尝试直接查询
+        3. 最终通过get_or_create处理竞态条件
         """
         opts = self._get_opts(model, for_concrete_model)
         try:
@@ -44,19 +54,17 @@ class ContentTypeManager(models.Manager):
         except KeyError:
             pass
 
-        # The ContentType entry was not found in the cache, therefore we
-        # proceed to load or create it.
+        # 处理缓存未命中情况，执行数据库查询或创建操作
         try:
-            # Start with get() and not get_or_create() in order to use
-            # the db_for_read (see #20401).
+            # 优先使用直接查询以利用数据库路由策略
             ct = self.get(app_label=opts.app_label, model=opts.model_name)
         except self.model.DoesNotExist:
-            # Not found in the database; we proceed to create it. This time
-            # use get_or_create to take care of any race conditions.
+            # 处理记录不存在场景，使用get_or_create保证原子性操作
             ct, created = self.get_or_create(
                 app_label=opts.app_label,
                 model=opts.model_name,
             )
+        # 将新获取/创建的ContentType对象写入缓存
         self._add_to_cache(self.db, ct)
         return ct
 

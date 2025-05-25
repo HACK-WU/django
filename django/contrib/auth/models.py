@@ -348,6 +348,17 @@ class PermissionsMixin(models.Model):
         related_query_name="user",
     )
 
+    # related_name="user_set",反向关联命名：定义从Group模型反向访问关联User对象的集合名称
+    # 若不指定，Django会自动生成<modelname>_set格式的名称（如user_set）
+    # 使用示例：
+    # group = Group.objects.get(name='admin')
+    # group.user_set.all()
+
+    # related_query_name="user",查询条件命名：定义在跨表查询时使用的字段别名
+    # 若不指定，Django 会默认使用模型的小写名称作为查询名称。
+    # 使用示例：
+    # Group.objects.filter(user__username="john")
+
     class Meta:
         abstract = True
 
@@ -383,11 +394,18 @@ class PermissionsMixin(models.Model):
 
     def has_perm(self, perm, obj=None):
         """
-        Return True if the user has the specified permission. Query all
-        available auth backends, but return immediately if any backend returns
-        True. Thus, a user who has permission from a single auth backend is
-        assumed to have permission in general. If an object is provided, check
-        permissions for that object.
+        检查用户是否具有指定的权限
+
+        参数:
+            perm: 字符串，表示要检查的权限名称
+            obj: 可选参数，表示要检查权限的对象
+
+        返回值:
+            如果用户具有指定权限，则返回True；否则返回False
+
+        此方法通过查询所有可用的认证后端来确定用户是否具有指定的权限。
+        如果任何后端返回True，则立即返回，这意味着如果用户从单个认证后端获得权限，
+        则假定用户通常具有权限。如果提供了对象，则检查该对象的权限。
         """
         # Active superusers have all permissions.
         if self.is_active and self.is_superuser:

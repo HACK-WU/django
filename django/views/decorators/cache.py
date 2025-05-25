@@ -9,17 +9,21 @@ from django.utils.decorators import decorator_from_middleware_with_args
 
 def cache_page(timeout, *, cache=None, key_prefix=None):
     """
-    Decorator for views that tries getting the page from the cache and
-    populates the cache if the page isn't in the cache yet.
+    缓存页面内容的装饰器，用于加速视图响应速度
 
-    The cache is keyed by the URL and some data from the headers.
-    Additionally there is the key prefix that is used to distinguish different
-    cache areas in a multi-site setup. You could use the
-    get_current_site().domain, for example, as that is unique across a Django
-    project.
+    参数:
+        timeout (int): 缓存超时时间（秒），必须为正整数
+        cache (str, optional): 指定缓存配置别名，默认使用默认缓存
+        key_prefix (str, optional): 缓存键前缀，用于多站点环境隔离，默认为空
 
-    Additionally, all headers from the response's Vary header will be taken
-    into account on caching -- just like the middleware does.
+    返回值:
+        function: 返回一个装饰器函数，用于包装视图函数实现缓存功能
+
+    执行流程:
+        1. 通过decorator_from_middleware_with_args创建中间件装饰器
+        2. 将超时时间映射到page_timeout参数
+        3. 指定缓存别名和键前缀参数传递给中间件
+        4. 生成的装饰器将视图函数包装为带缓存逻辑的闭包函数
     """
     return decorator_from_middleware_with_args(CacheMiddleware)(
         page_timeout=timeout,

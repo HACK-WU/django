@@ -102,14 +102,39 @@ def patch_cache_control(response, **kwargs):
 
 def get_max_age(response):
     """
-    Return the max-age from the response Cache-Control header as an integer,
-    or None if it wasn't found or wasn't an integer.
+    从响应对象的Cache-Control头部提取最大缓存时间参数
+
+    参数:
+        response: HttpResponse对象，需包含HTTP响应头部信息
+            需支持has_header()方法检测头部存在性
+            需通过headers字典访问原始头部数据
+
+    返回值:
+        int/None: 解析成功的整型秒数或None（以下情况之一）：
+            - 缺失Cache-Control头部
+            - max-age参数不存在
+            - 参数值非整数格式
+            - 参数值无法转换为数字
+
+    Cache-Control的作用是什么？
+
+
+
+    处理流程：
+    1. 安全检查：验证Cache-Control头部是否存在
+    2. 头部解析：使用正则分隔符拆分并构建键值对字典
+    3. 参数提取：尝试获取max-age参数并进行类型转换
+    4. 异常处理：捕获格式错误/类型错误/键不存在等异常
     """
     if not response.has_header("Cache-Control"):
         return
+    # 将Cache-Control头部值拆分为键值对字典结构
+    # 使用正则表达式分割参数项并转换为(key, value)元组
     cc = dict(
         _to_tuple(el) for el in cc_delim_re.split(response.headers["Cache-Control"])
     )
+    # 尝试提取max-age参数并转换为整数类型
+    # 捕获可能的类型转换异常和参数缺失异常
     try:
         return int(cc["max-age"])
     except (ValueError, TypeError, KeyError):
@@ -376,23 +401,40 @@ def _generate_cache_header_key(key_prefix, request):
 
 def get_cache_key(request, key_prefix=None, method="GET", cache=None):
     """
-    Return a cache key based on the request URL and query. It can be used
-    in the request phase because it pulls the list of headers to take into
-    account from the global URL registry and uses those to build a cache key
-    to check against.
+    根据请求信息生成缓存键，用于缓存中间件的缓存命中判断
 
-    If there isn't a headerlist stored, return None, indicating that the page
-    needs to be rebuilt.
+    参数:
+        request: HttpRequest对象，包含请求的元数据（如路径、查询参数等）
+        key_prefix: 缓存键前缀字符串，用于命名空间隔离，默认使用全局配置
+        method: 请求方法字符串（如GET/POST），用于区分不同方法的缓存策略
+        cache: 缓存实例对象，用于存储header列表信息，默认使用全局缓存别名
+
+    返回值:
+        str类型缓存键（当header列表存在时）或None（当需要重建页面时）
+
+    该函数实现两级缓存键生成机制：
+    1. 先通过请求URL生成header列表缓存键
+    2. 再根据header列表生成最终的请求缓存键
     """
     if key_prefix is None:
+        # 使用全局缓存中间件前缀作为默认值
         key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
+
+    # 生成header列表缓存键（用于存储响应头字段列表）
     cache_key = _generate_cache_header_key(key_prefix, request)
+
     if cache is None:
+        # 使用全局缓存中间件别名对应的缓存实例
         cache = caches[settings.CACHE_MIDDLEWARE_ALIAS]
+
+    # 从缓存中获取header字段列表（用于确定参与缓存的请求头）
     headerlist = cache.get(cache_key)
+
     if headerlist is not None:
+        # 当header列表存在时生成最终缓存键
         return _generate_cache_key(request, method, headerlist, key_prefix)
     else:
+        # 当header列表不存在时返回None表示需要重建缓存
         return None
 
 

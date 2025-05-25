@@ -103,23 +103,48 @@ class ModelBackend(BaseBackend):
 
     def _get_permissions(self, user_obj, obj, from_name):
         """
-        Return the permissions of `user_obj` from `from_name`. `from_name` can
-        be either "group" or "user" to return permissions from
-        `_get_group_permissions` or `_get_user_permissions` respectively.
+        获取用户的权限集合
+
+        此方法根据用户对象、权限所属对象和权限来源（群组或用户）来返回用户的权限集合
+        如果用户不是活跃状态、是匿名用户或者权限所属对象不为空，则返回空集合
+        否则，根据来源从缓存中获取权限集合，如果缓存不存在，则进行查询并缓存结果
+
+        参数:
+            user_obj: 用户对象，用于获取权限的用户
+            obj: 权限所属对象，目前未使用，保留参数以适应未来可能的需求
+            from_name: 权限来源，可以是"group"（群组）或"user"（用户）
+
+        返回值:
+            权限集合，包含用户从指定来源获取的所有权限
         """
+        # 验证用户状态，非活跃、匿名用户或存在权限所属对象时直接返回空集合
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
             return set()
 
+        # 构建缓存名称，用于存储用户或群组权限
         perm_cache_name = "_%s_perm_cache" % from_name
+
+        # 检查用户对象是否已有权限缓存，如果没有则进行查询
         if not hasattr(user_obj, perm_cache_name):
+            # 超级用户直接查询所有权限
             if user_obj.is_superuser:
                 perms = Permission.objects.all()
             else:
+                # 根据from_name调用相应的权限获取方法
                 perms = getattr(self, "_get_%s_permissions" % from_name)(user_obj)
+
+            # 将查询结果转换为权限字符串集合，并设置为用户对象的属性
+            # 比如：
+            # [('app01', 'add_car'), ('app01', 'change_car')]
             perms = perms.values_list("content_type__app_label", "codename").order_by()
             setattr(
                 user_obj, perm_cache_name, {"%s.%s" % (ct, name) for ct, name in perms}
             )
+
+        # perm_cache_name 格式为：
+        # {"app01.add_book","app01.delete_book" }
+
+        # 返回权限集合
         return getattr(user_obj, perm_cache_name)
 
     async def _aget_permissions(self, user_obj, obj, from_name):
@@ -164,11 +189,31 @@ class ModelBackend(BaseBackend):
         return await self._aget_permissions(user_obj, obj, "group")
 
     def get_all_permissions(self, user_obj, obj=None):
+        """
+        获取指定用户的全部权限
+
+        此方法针对给定的用户对象，返回其拥有的所有权限的集合如果用户不符合活跃条件，
+        或是匿名用户，或是为特定对象请求权限，则返回空集合如果用户权限未被缓存，则调用
+        父类方法获取权限并缓存结果，以优化后续查询
+
+        参数:
+            user_obj: User对象，需获取权限的用户
+            obj: 可选参数，若提供则表示为特定对象请求权限，目前不支持此功能，应为None
+
+        返回值:
+            set类型，包含用户的所有权限字符串如果用户不活跃、是匿名用户或obj参数非None，则返回空集合
+        """
+        # 检查用户是否为活跃状态、非匿名用户，且不涉及特定对象的权限查询
         if not user_obj.is_active or user_obj.is_anonymous or obj is not None:
             return set()
+
+        # 检查用户对象是否已缓存权限信息，若未缓存则进行获取并缓存
         if not hasattr(user_obj, "_perm_cache"):
             user_obj._perm_cache = super().get_all_permissions(user_obj)
+
+        # 返回缓存的权限信息
         return user_obj._perm_cache
+
 
     def has_perm(self, user_obj, perm, obj=None):
         return user_obj.is_active and super().has_perm(user_obj, perm, obj=obj)
